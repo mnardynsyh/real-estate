@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\TransactionController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Auth\LoginController as AuthController;
+use App\Http\Controllers\Auth\RegisterController as RegisterController;
 use App\Http\Controllers\Customer\DashboardController as CustomerDashboard;
 use App\Http\Controllers\HomeController;
 
@@ -18,6 +19,9 @@ Route::get('/unit/{id}', [HomeController::class, 'show'])->name('unit.show');
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::get('/register', [RegisterController::class, 'showRegisterForm'])->name('register');
+Route::post('/register', [RegisterController::class, 'register'])->name('register.post');
 
 // --- ROUTE ADMIN ---
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
