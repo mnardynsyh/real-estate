@@ -1,19 +1,24 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\UnitController;
-use App\Http\Controllers\Admin\HousingController;
-use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\HousingController;
+use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\TransactionController;
+use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Auth\LoginController as AuthController;
+use App\Http\Controllers\Customer\DashboardController as CustomerDashboard;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::prefix('admin')->name('admin.')->group(function () {
-
+// --- ROUTE ADMIN ---
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -21,22 +26,29 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('housing', HousingController::class);
     Route::resource('units', UnitController::class);
 
-    // Transaksi (Custom Routes untuk masing-masing status)
+    // Transaksi
     Route::prefix('transactions')->name('transactions.')->group(function () {
-        // Halaman Utama Riwayat
         Route::get('/', [TransactionController::class, 'index'])->name('index');
-        
-        // Halaman Verifikasi Booking (Pending)
         Route::get('/booking', [TransactionController::class, 'bookingVerification'])->name('booking');
-        
-        // Halaman Verifikasi Berkas
         Route::get('/documents', [TransactionController::class, 'documentVerification'])->name('documents');
-        
-        // Halaman Approval & DP
         Route::get('/approval', [TransactionController::class, 'approval'])->name('approval');
     });
 
-    // Users Management
+    // Users
     Route::resource('customers', CustomerController::class);
+});
 
+/*
+|--------------------------------------------------------------------------
+| Customer Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('customer')->middleware(['auth', 'role:customer'])->name('customer.')->group(function () {
+    
+    // Dashboard Utama
+    Route::get('/dashboard', [CustomerDashboard::class, 'index'])->name('dashboard');
+
+    // Route lain menyusul (Profile, Transaksi, dll)
+    // Route::get('/profile', ...)->name('profile');
+    
 });

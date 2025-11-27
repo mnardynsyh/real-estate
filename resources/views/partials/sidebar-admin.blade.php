@@ -206,8 +206,10 @@
 
         {{-- Logout --}}
         <div class="px-3 pb-6 mt-4 border-t border-slate-800 pt-6">
-            <form action="#" method="POST" class="w-full">
-                {{-- @csrf --}}
+            {{-- Form Logout Wajib Method POST --}}
+            <form action="{{ route('logout') }}" method="post" class="w-full">
+                @csrf  {{-- PENTING: Token keamanan ini wajib ada --}}
+                
                 <button type="submit"
                         class="flex items-center gap-3 px-4 py-3 w-full text-left transition-all duration-200 text-slate-400 hover:bg-red-900/20 hover:text-red-400 rounded-lg group border-l-[6px] border-transparent">
                     <i class="fa-solid fa-right-from-bracket w-5 text-center text-[18px] transition group-hover:translate-x-1"></i>
