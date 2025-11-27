@@ -8,10 +8,12 @@ use App\Http\Controllers\Admin\TransactionController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Auth\LoginController as AuthController;
 use App\Http\Controllers\Customer\DashboardController as CustomerDashboard;
+use App\Http\Controllers\HomeController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// ================= PUBLIC ROUTES =================
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/catalog', [HomeController::class, 'catalog'])->name('catalog');
+Route::get('/unit/{id}', [HomeController::class, 'show'])->name('unit.show');
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
