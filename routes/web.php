@@ -26,12 +26,32 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::resource('housing', HousingController::class);
     Route::resource('units', UnitController::class);
 
-    // Transaksi
+    // 3. MANAJEMEN TRANSAKSI
     Route::prefix('transactions')->name('transactions.')->group(function () {
-        Route::get('/', [TransactionController::class, 'index'])->name('index');
+        
+        // Halaman List Verifikasi Booking
         Route::get('/booking', [TransactionController::class, 'bookingVerification'])->name('booking');
+        
+        // Action: Approve & Reject
+        Route::patch('/booking/{id}/approve', [TransactionController::class, 'approveBooking'])->name('booking.approve');
+        Route::patch('/booking/{id}/reject', [TransactionController::class, 'rejectBooking'])->name('booking.reject');
+
+        // Halaman Verifikasi Berkas
         Route::get('/documents', [TransactionController::class, 'documentVerification'])->name('documents');
+        
+        // Action: Approve (Lanjut Bank) & Revisi
+        Route::patch('/documents/{id}/approve', [TransactionController::class, 'approveDocuments'])->name('documents.approve');
+        Route::patch('/documents/{id}/revise', [TransactionController::class, 'reviseDocuments'])->name('documents.revise');
+
+        // Halaman Approval & Finalisasi
         Route::get('/approval', [TransactionController::class, 'approval'])->name('approval');
+        
+        // Action: Finalize (Sold) & Reject Bank
+        Route::patch('/approval/{id}/finalize', [TransactionController::class, 'finalizeTransaction'])->name('approval.finalize');
+        Route::patch('/approval/{id}/reject-bank', [TransactionController::class, 'rejectBank'])->name('approval.reject');
+
+        // Riwayat
+        Route::get('/', [TransactionController::class, 'index'])->name('index');
     });
 
     // Users
