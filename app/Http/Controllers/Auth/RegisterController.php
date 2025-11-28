@@ -62,7 +62,7 @@ class RegisterController extends Controller
         }
     }
 
-    // Helper: Logika Redirect (Dicopy agar independen)
+    // Helper: Logika Redirect
     protected function redirectUserBasedOnRole()
     {
         if (Auth::user()->role === 'admin') {
