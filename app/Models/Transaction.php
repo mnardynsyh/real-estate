@@ -29,6 +29,6 @@ class Transaction extends Model
     // Relasi: Transaksi punya banyak Dokumen
     public function documents()
     {
-        return $this->hasMany(Document::class);
+        return $this->hasMany(TransactionDocument::class);
     }
 }
