@@ -12,7 +12,7 @@ class UnitController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Unit::with('location'); // Eager load relasi location
+        $query = Unit::with('location');
 
 
         // Filter Dropdown Lokasi
@@ -37,7 +37,7 @@ class UnitController extends Controller
             'land_area' => 'required|numeric',
             'building_area' => 'required|numeric',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|max:10240', // Max 10MB
+            'image' => 'nullable|image|max:10240',
         ]);
 
         // Upload Gambar

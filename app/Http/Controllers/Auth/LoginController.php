@@ -10,7 +10,6 @@ class LoginController extends Controller
 {
     public function showLoginForm()
     {
-        // Jika user sudah login, lempar langsung ke dashboard sesuai role
         if (Auth::check()) {
             return $this->redirectUserBasedOnRole();
         }

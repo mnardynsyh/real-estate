@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Hash;
 
 class RegisterController extends Controller
 {
-    // Tampilkan Form Register
     public function showRegisterForm()
     {
  
@@ -25,7 +24,6 @@ class RegisterController extends Controller
     // Proses Registrasi
     public function register(Request $request)
     {
-        // Validasi Input
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -35,8 +33,7 @@ class RegisterController extends Controller
 
         try {
             DB::transaction(function () use ($request) {
-                
-                // A. Buat Akun User
+
                 $user = User::create([
                     'name' => $request->name,
                     'email' => $request->email,
@@ -44,17 +41,14 @@ class RegisterController extends Controller
                     'role' => 'customer',
                 ]);
 
-                // B. Buat Data Profil Customer
                 Customer::create([
                     'user_id' => $user->id,
                     'phone' => $request->phone,
                 ]);
 
-                // C. Login Otomatis
                 Auth::login($user);
             });
 
-            // Redirect ke Dashboard Customer
             return redirect()->route('customer.dashboard')->with('success', 'Registrasi berhasil! Selamat datang.');
 
         } catch (\Exception $e) {

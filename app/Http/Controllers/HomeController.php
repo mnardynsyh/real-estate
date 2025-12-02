@@ -11,14 +11,12 @@ class HomeController extends Controller
 {
     public function index()
     {
-        // Ambil 6 unit terbaru yang statusnya 'available' untuk featured
         $featuredUnits = Unit::with('location')
             ->where('status', 'available')
             ->latest()
             ->take(6)
             ->get();
 
-        // Ambil data lokasi untuk dropdown pencarian cepat (opsional)
         $locations = HousingLocation::all();
 
         return view('welcome', compact('featuredUnits', 'locations'));
@@ -49,7 +47,6 @@ class HomeController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
-        // Urutkan & Pagination
         $units = $query->latest()->paginate(9)->withQueryString();
         $locations = HousingLocation::all();
 

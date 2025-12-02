@@ -11,8 +11,6 @@ class HousingController extends Controller
     public function index(Request $request)
     {
         $query = HousingLocation::query();
-
-        // Ambil data (Paginate 10 per halaman)
         $housings = $query->latest()->paginate(10);
 
         return view('admin.housing', compact('housings'));

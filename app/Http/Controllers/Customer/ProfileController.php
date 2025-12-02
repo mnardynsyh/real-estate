@@ -21,7 +21,6 @@ class ProfileController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // 1. Validasi Input
         $request->validate([
             'name' => 'required|string|max:255',
             'password' => 'nullable|string|min:8|confirmed',
@@ -31,7 +30,6 @@ class ProfileController extends Controller
             'address' => 'required|string|max:500',
         ]);
 
-        // 2. Update Data User (Login)
         $userData = ['name' => $request->name];
         
         if ($request->filled('password')) {
@@ -40,7 +38,6 @@ class ProfileController extends Controller
         
         $user->update($userData);
 
-        // 3. Update Data Customer (Biodata)
         Customer::updateOrCreate(
             ['user_id' => $user->id],
             [

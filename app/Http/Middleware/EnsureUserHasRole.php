@@ -24,19 +24,14 @@ class EnsureUserHasRole
         // 2. Cek apakah role user SESUAI dengan role yang diminta route
         if (Auth::user()->role !== $role) {
             
-            // Logika Redirect jika salah kamar:
-            
-            // Jika user Customer mencoba masuk area Admin -> Tendang ke Dashboard Customer
             if (Auth::user()->role === 'customer') {
                 return redirect()->route('customer.dashboard');
             }
 
-            // Jika user Admin mencoba masuk area Customer -> Tendang ke Dashboard Admin
             if (Auth::user()->role === 'admin') {
                 return redirect()->route('admin.dashboard');
             }
 
-            // Default: Tampilkan halaman 403 Forbidden
             abort(403, 'Anda tidak memiliki hak akses ke halaman ini.');
         }
 

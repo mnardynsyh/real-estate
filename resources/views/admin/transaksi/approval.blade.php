@@ -4,15 +4,12 @@
 @section('content')
 <div x-data="{ 
     activeModal: null, 
-    
-    // Data Transaksi
     trxId: null,
     trxCode: '',
     trxName: '',
     unitPrice: 0,
     bookingFee: 0,
     
-    // Buka Modal Finalisasi
     openFinalizeModal(id, code, name, price, booking) {
         this.activeModal = 'finalize';
         this.trxId = id;
@@ -22,7 +19,6 @@
         this.bookingFee = booking;
     },
 
-    // Buka Modal Batal Bank
     openRejectModal(id, code, name) {
         this.activeModal = 'reject';
         this.trxId = id;
@@ -34,74 +30,78 @@
         this.activeModal = null;
     },
 
-    // Helper Hitung Sisa DP (Contoh 20% - Booking)
     get estimatedDp() {
-        // Asumsi DP 20% standar, dikurangi booking fee
         return (this.unitPrice * 0.2) - this.bookingFee;
     }
-}" class="w-full min-h-screen bg-[#F0F2F5] px-4 pt-6 pb-10 lg:px-8 lg:pt-10 flex flex-col font-sans text-slate-800">
+}" class="w-full min-h-screen bg-slate-100 px-2 pt-16 lg:px-4 lg:pt-16 flex flex-col font-sans text-slate-800">
 
     <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col">
 
-        {{-- 1. HEADER --}}
-        <div class="shrink-0 mb-8">
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Approval Bank & DP</h1>
-            <p class="text-sm text-slate-500 mt-1 font-medium">
-                Pantau proses pengajuan KPR. Finalisasi transaksi jika Akad Kredit selesai dan DP lunas.
-            </p>
+        {{-- Header --}}
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4 border-b border-slate-400 pb-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900">
+                    Approval Bank & DP
+                </h1>
+                <p class="text-slate-600 mt-1 text-sm font-medium">
+                    Pantau proses pengajuan KPR. Finalisasi transaksi jika Akad Kredit selesai dan DP lunas.
+                </p>
+            </div>
         </div>
 
-        {{-- 2. ALERT --}}
-        <div class="shrink-0 flex flex-col gap-4 mb-6">
+        {{-- Alerts --}}
+        <div class="flex flex-col gap-4 mb-8">
             @if(session('success'))
-                <div x-data="{ show: true }" x-show="show" x-transition.duration.300ms 
-                     class="p-4 rounded-xl bg-white border-l-4 border-emerald-500 text-slate-700 flex items-center justify-between shadow-sm">
+                <div x-data="{ show: true }" x-show="show" x-transition.opacity.duration.500ms 
+                     class="p-4 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800 flex items-center justify-between shadow-sm">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-check"></i>
                         </div>
                         <span class="text-sm font-bold">{{ session('success') }}</span>
                     </div>
-                    <button @click="show = false" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+                    <button @click="show = false" class="text-emerald-400 hover:text-emerald-600 transition-colors">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
                 </div>
             @endif
         </div>
 
-        {{-- 3. TABLE LIST --}}
+        {{-- Table List --}}
         <div class="flex-1 flex flex-col">
-            <div class="hidden lg:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50/50 border-b border-slate-200">
+            
+            {{-- Desktop --}}
+            <div class="hidden lg:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider">
                         <tr>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-16 text-center">No</th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Customer</th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unit Properti</th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Estimasi Harga</th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center w-40">Aksi</th>
+                            <th class="px-6 py-4 font-bold w-16 text-center">No</th>
+                            <th class="px-6 py-4 font-bold">Customer</th>
+                            <th class="px-6 py-4 font-bold">Unit Properti</th>
+                            <th class="px-6 py-4 font-bold">Estimasi Harga</th>
+                            <th class="px-6 py-4 font-bold text-center">Status</th>
+                            <th class="px-6 py-4 font-bold text-center w-40">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-slate-100 text-slate-600">
                         @forelse($transactions as $i => $trx)
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 text-center text-xs font-bold text-slate-400">
+                            <tr class="hover:bg-slate-50/80 transition-colors group">
+                                <td class="px-6 py-4 text-center font-medium text-slate-400">
                                     {{ $transactions->firstItem() + $i }}
                                 </td>
                                 
-                                {{-- Customer --}}
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-xs shrink-0 border border-orange-100">
+                                        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0 border border-indigo-100">
                                             {{ substr($trx->user->name, 0, 2) }}
                                         </div>
                                         <div>
-                                            <p class="text-sm font-bold text-slate-900">{{ $trx->user->name }}</p>
-                                            <p class="text-xs text-slate-500 font-mono mt-0.5">{{ $trx->code }}</p>
+                                            <p class="text-sm font-bold text-slate-800">{{ $trx->user->name }}</p>
+                                            <p class="text-xs text-slate-400 font-mono mt-0.5">{{ $trx->code }}</p>
                                         </div>
                                     </div>
                                 </td>
 
-                                {{-- Unit --}}
                                 <td class="px-6 py-4">
                                     <div>
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 mb-1">
@@ -112,13 +112,11 @@
                                     </div>
                                 </td>
 
-                                {{-- Harga --}}
                                 <td class="px-6 py-4">
                                     <p class="text-sm font-bold text-slate-800">Rp {{ number_format($trx->unit->price, 0, ',', '.') }}</p>
                                     <p class="text-[10px] text-slate-500 mt-1">Booking: Rp {{ number_format($trx->booking_fee, 0, ',', '.') }} (Lunas)</p>
                                 </td>
 
-                                {{-- Status --}}
                                 <td class="px-6 py-4 text-center">
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold border border-orange-200 animate-pulse">
                                         <i class="fa-solid fa-building-columns"></i>
@@ -126,17 +124,14 @@
                                     </span>
                                 </td>
 
-                                {{-- Aksi --}}
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        {{-- Reject (Batal) --}}
                                         <button @click="openRejectModal({{ $trx->id }}, '{{ $trx->code }}', '{{ $trx->user->name }}')" 
                                                 class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 transition-all shadow-sm"
                                                 title="Gagal / Batal">
-                                            <i class="fa-solid fa-xmark"></i>
+                                            <i class="fa-solid fa-xmark text-sm"></i>
                                         </button>
                                         
-                                        {{-- Finalize (Sold) --}}
                                         <button @click="openFinalizeModal({{ $trx->id }}, '{{ $trx->code }}', '{{ $trx->user->name }}', {{ $trx->unit->price }}, {{ $trx->booking_fee }})" 
                                                 class="inline-flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-green-200 hover:-translate-y-0.5">
                                             <i class="fa-solid fa-handshake"></i> Akad & Sold
@@ -161,21 +156,20 @@
                 </table>
             </div>
 
-            {{-- MOBILE CARD VIEW --}}
-            <div class="lg:hidden space-y-4">
+            {{-- Mobile --}}
+            <div class="lg:hidden space-y-4 mb-6">
                 @foreach($transactions as $trx)
-                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                        {{-- Stripe Orange --}}
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
 
                         <div class="pl-3">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-xs border border-orange-100">
+                                    <div class="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-xs border border-orange-100">
                                         {{ substr($trx->user->name, 0, 2) }}
                                     </div>
                                     <div>
-                                        <p class="text-sm font-bold text-slate-900">{{ $trx->user->name }}</p>
+                                        <h3 class="text-sm font-bold text-slate-900">{{ $trx->user->name }}</h3>
                                         <p class="text-xs text-slate-500 font-mono">{{ $trx->code }}</p>
                                     </div>
                                 </div>
@@ -210,21 +204,21 @@
                 @endforeach
             </div>
 
-            {{-- PAGINATION --}}
+            {{-- Pagination --}}
             @if($transactions->hasPages())
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3 mt-4">
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3 mt-4">
                     {{ $transactions->links() }}
                 </div>
             @endif
         </div>
     </div>
 
-    {{-- ================= MODAL FINALISASI (SOLD) ================= --}}
+    {{-- Modal Finalize --}}
     <div x-show="activeModal === 'finalize'" style="display: none;" 
          class="fixed inset-0 z-50 flex items-center justify-center px-4"
          x-transition.opacity.duration.300ms>
         
-        <div @click="closeModal()" class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm"></div>
+        <div @click="closeModal()" class="absolute inset-0 bg-slate-900/60 backdrop-blur-[3px]"></div>
 
         <div class="relative w-full max-w-lg rounded-2xl bg-white p-8 shadow-2xl transform transition-all"
              x-transition:enter="transition ease-out duration-300"
@@ -276,7 +270,7 @@
         </div>
     </div>
 
-    {{-- ================= MODAL REJECT (GAGAL BANK) ================= --}}
+    {{-- Modal Reject --}}
     <div x-show="activeModal === 'reject'" style="display: none;" 
          class="fixed inset-0 z-50 flex items-center justify-center px-4"
          x-transition.opacity.duration.300ms>

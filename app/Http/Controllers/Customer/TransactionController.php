@@ -116,7 +116,6 @@ class TransactionController extends Controller
         ]);
 
         return DB::transaction(function () use ($request, $id) {
-            // Eager load documents untuk efisiensi
             $trx = Transaction::with('documents')->where('user_id', Auth::id())->findOrFail($id);
 
             if (!in_array($trx->status, ['booking_acc', 'docs_review'])) {
@@ -129,19 +128,16 @@ class TransactionController extends Controller
             $existingDoc = $trx->documents->where('type', $request->type)->first();
 
             if ($existingDoc) {
-                // 1. Hapus file fisik lama agar storage tidak penuh
                 if ($existingDoc->file_path && Storage::disk('public')->exists($existingDoc->file_path)) {
                     Storage::disk('public')->delete($existingDoc->file_path);
                 }
 
-                // 2. Update record yang ada (Replace)
                 $existingDoc->update([
                     'file_path' => $path,
-                    'status'    => 'pending', // Reset status jadi pending (agar merah invalid hilang)
-                    'note'      => null       // Hapus catatan revisi
+                    'status'    => 'pending', // Reset status jadi pending
+                    'note'      => null
                 ]);
             } else {
-                // 3. Jika belum ada, baru create
                 $trx->documents()->create([
                     'type'      => $request->type,
                     'file_path' => $path,
@@ -150,9 +146,6 @@ class TransactionController extends Controller
                 ]);
             }
 
-            // Logic Status Transaksi
-            // Jika status sekarang 'booking_acc' (fase revisi global/awal), ubah jadi 'docs_review'
-            // Ini mentrigger admin bahwa "ada update baru nih"
             if ($trx->status === 'booking_acc') {
                 $trx->update([
                     'status'     => 'docs_review',
