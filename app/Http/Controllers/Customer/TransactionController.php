@@ -9,190 +9,158 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Models\Transaction;
-use App\Models\TransactionDocument;
 use App\Models\Unit;
 
 class TransactionController extends Controller
 {
-    /**
-     * LIST TRANSAKSI
-     */
     public function index()
     {
         $transactions = Transaction::with(['unit.location', 'documents'])
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->paginate(10);
-
+            ->where('user_id', Auth::id())->latest()->paginate(10);
         return view('customer.transactions.index', compact('transactions'));
     }
 
-    /**
-     * HALAMAN DETAIL TRANSAKSI
-     */
     public function show($id)
     {
-        $trx = Transaction::with([
-            'unit.location',
-            'documents'
-        ])->where('user_id', Auth::id())
-          ->findOrFail($id);
+        $trx = Transaction::with(['unit.location', 'documents'])
+            ->where('user_id', Auth::id())->findOrFail($id);
 
-        // Step urutan
-        $steps = [
-            'pending'       => 1,
-            'process'       => 2,
-            'booking_acc'   => 3,
-            'docs_review'   => 4,
-            'bank_process'  => 5,
-            'sold'          => 6,
-            'rejected'      => 6,
-            'canceled'      => 6,
+        $isRevision = ($trx->status === 'booking_acc' && !empty($trx->admin_note));
+        
+        $stepMap = [
+            'pending' => 1, 'process' => 2, 'booking_acc' => $isRevision ? 4 : 3,
+            'docs_review' => 5, 'bank_review' => 6, 'approved' => 6,
+            'sold' => 7, 'rejected' => 7, 'canceled' => 7,
         ];
-
+        
+        $currentStep = $stepMap[$trx->status] ?? 1;
         $stepTitles = [
-            1 => 'Upload Bukti Bayar',
-            2 => 'Review Admin',
-            3 => 'Booking Disetujui',
-            4 => 'Upload Dokumen KPR',
-            5 => 'Proses Bank',
-            6 => 'Selesai'
+            1 => 'Bukti Pembayaran', 2 => 'Verifikasi', 3 => 'Booking Valid',
+            4 => 'Pemberkasan', 5 => 'Validasi Berkas', 6 => 'Proses Bank', 7 => 'Selesai'
         ];
-
-        $currentStep = $steps[$trx->status] ?? 1;
-
-        // Dokumen wajib
         $requiredDocs = [
-            'ktp'            => 'KTP Pemohon',
-            'kk'             => 'Kartu Keluarga',
-            'npwp'           => 'NPWP',
-            'slip_gaji'      => 'Slip Gaji / Bukti Penghasilan',
-            'rekening_koran' => 'Rekening Koran 3 Bulan Terakhir'
+            'ktp' => 'KTP', 'kk' => 'KK', 'npwp' => 'NPWP',
+            'slip_gaji' => 'Slip Gaji', 'rekening_koran' => 'Rekening Koran'
         ];
 
-        return view('customer.transactions.show', compact(
-            'trx',
-            'currentStep',
-            'stepTitles',
-            'requiredDocs'
-        ));
+        return view('customer.transactions.show', compact('trx', 'currentStep', 'stepTitles', 'requiredDocs', 'isRevision'));
     }
 
-
-    /**
-     * PROSES BOOKING UNIT
-     */
     public function store(Request $request)
     {
-        $request->validate([
-            'unit_id' => 'required|exists:units,id',
-        ]);
-
-        // WAJIB: profil lengkap
-        $customer = Auth::user()->customer;
-        if (!$customer || !$customer->nik || !$customer->phone || !$customer->address) {
-            return back()->with('error', 'Lengkapi profil Anda sebelum booking.');
+        $request->validate(['unit_id' => 'required|exists:units,id']);
+        $user = Auth::user();
+        
+        if (!$user->customer || !$user->customer->nik) {
+            return back()->with('error', 'Lengkapi NIK dan No HP di profil Anda sebelum booking.');
         }
 
-        return DB::transaction(function () use ($request) {
-
-            $unit = Unit::where('id', $request->unit_id)
-                ->lockForUpdate()
-                ->first();
-
-            if (!$unit || $unit->status !== 'available') {
-                return back()->with('error', 'Unit sudah tidak tersedia.');
-            }
-
-            // Cegah double booking unit yg sama
-            $existing = Transaction::where('user_id', Auth::id())
+        return DB::transaction(function () use ($request, $user) {
+            $unit = Unit::where('id', $request->unit_id)->lockForUpdate()->first();
+            if ($unit->status !== 'available') return back()->with('error', 'Maaf, unit ini baru saja dibooking orang lain.');
+            
+            $existing = Transaction::where('user_id', $user->id)
                 ->where('unit_id', $unit->id)
                 ->whereNotIn('status', ['rejected', 'canceled'])
                 ->exists();
 
-            if ($existing) {
-                return back()->with('error', 'Anda sudah memiliki transaksi aktif untuk unit ini.');
-            }
+            if ($existing) return back()->with('error', 'Anda sudah melakukan booking unit ini.');
 
-            // Booking fee = harga unit
-            $bookingFee = $unit->price;
+            $bookingFeeAmount = 2000000; 
 
-            // Kode transaksi
-            $trxCode = 'TXN-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
-
-            // Create transaksi
             $trx = Transaction::create([
-                'code'        => $trxCode,
-                'user_id'     => Auth::id(),
-                'unit_id'     => $unit->id,
-                'booking_fee' => $bookingFee,
-                'status'      => 'pending',
+                'code' => 'TRX-' . now()->format('ymd') . '-' . strtoupper(Str::random(5)),
+                'user_id' => $user->id,
+                'unit_id' => $unit->id,
+                'booking_fee' => $bookingFeeAmount, 
+                'status' => 'pending',
             ]);
 
-            // Lock unit
             $unit->update(['status' => 'booked']);
 
             return redirect()->route('customer.transactions.show', $trx->id)
-                ->with('success', 'Booking dibuat! Upload bukti pembayaran.');
+                ->with('success', 'Unit berhasil dibooking! Silakan transfer tanda jadi.');
         });
     }
 
-
-    /**
-     * UPLOAD BUKTI PEMBAYARAN
-     */
     public function uploadBookingProof(Request $request, $id)
     {
-        $request->validate([
-            'booking_proof' => 'required|image|max:10240',
-        ]);
+        $request->validate(['booking_proof' => 'required|image|max:5120']);
 
-        $trx = Transaction::where('user_id', Auth::id())->findOrFail($id);
+        return DB::transaction(function () use ($request, $id) {
+            $trx = Transaction::where('user_id', Auth::id())->lockForUpdate()->findOrFail($id);
+            
+            if ($trx->status !== 'pending') return back()->with('error', 'Status transaksi tidak valid.');
+            
+            if ($trx->booking_proof) Storage::disk('public')->delete($trx->booking_proof);
+            
+            $path = $request->file('booking_proof')->store('proofs', 'public');
+            
+            $trx->update([
+                'booking_proof' => $path,
+                'status' => 'process' 
+            ]);
 
-        if ($trx->status !== 'pending') {
-            return back()->with('error', 'Transaksi tidak mengizinkan upload bukti.');
-        }
-
-        $path = $request->file('booking_proof')->store('proofs', 'public');
-
-        $trx->update([
-            'booking_proof' => $path,
-            'status'        => 'process',
-        ]);
-
-        return back()->with('success', 'Bukti telah dikirim. Menunggu verifikasi admin.');
+            return back()->with('success', 'Bukti pembayaran terkirim. Menunggu verifikasi admin.');
+        });
     }
 
-
     /**
-     * UPLOAD DOKUMEN KPR
+     * UPLOAD DOKUMEN (LOGIC: REPLACE FILE LAMA)
      */
     public function uploadDocument(Request $request, $id)
     {
         $request->validate([
             'type' => 'required|string',
-            'file' => 'required|mimes:jpg,jpeg,png,pdf|max:3000',
+            'file' => 'required|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
-        $trx = Transaction::findOrFail($id);
+        return DB::transaction(function () use ($request, $id) {
+            // Eager load documents untuk efisiensi
+            $trx = Transaction::with('documents')->where('user_id', Auth::id())->findOrFail($id);
 
-        // Upload file
-        $path = $request->file('file')->store('documents', 'public');
+            if (!in_array($trx->status, ['booking_acc', 'docs_review'])) {
+                return back()->with('error', 'Sesi upload dokumen belum dibuka.');
+            }
 
-        // Simpan record
-        $trx->documents()->create([
-            'type' => $request->type,
-            'file_path' => $path,
-        ]);
+            $path = $request->file('file')->store('documents', 'public');
 
-        // Ubah status menjadi docs_review jika masih booking_acc
-        if ($trx->status === 'booking_acc') {
-            $trx->update([
-                'status' => 'docs_review'
-            ]);
-        }
+            // Cek apakah dokumen dengan tipe ini sudah ada?
+            $existingDoc = $trx->documents->where('type', $request->type)->first();
 
-        return back()->with('success', 'Dokumen berhasil diunggah.');
+            if ($existingDoc) {
+                // 1. Hapus file fisik lama agar storage tidak penuh
+                if ($existingDoc->file_path && Storage::disk('public')->exists($existingDoc->file_path)) {
+                    Storage::disk('public')->delete($existingDoc->file_path);
+                }
+
+                // 2. Update record yang ada (Replace)
+                $existingDoc->update([
+                    'file_path' => $path,
+                    'status'    => 'pending', // Reset status jadi pending (agar merah invalid hilang)
+                    'note'      => null       // Hapus catatan revisi
+                ]);
+            } else {
+                // 3. Jika belum ada, baru create
+                $trx->documents()->create([
+                    'type'      => $request->type,
+                    'file_path' => $path,
+                    'status'    => 'pending',
+                    'note'      => null
+                ]);
+            }
+
+            // Logic Status Transaksi
+            // Jika status sekarang 'booking_acc' (fase revisi global/awal), ubah jadi 'docs_review'
+            // Ini mentrigger admin bahwa "ada update baru nih"
+            if ($trx->status === 'booking_acc') {
+                $trx->update([
+                    'status'     => 'docs_review',
+                    'admin_note' => null 
+                ]);
+            }
+
+            return back()->with('success', 'Dokumen berhasil diunggah.');
+        });
     }
-
 }

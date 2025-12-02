@@ -5,53 +5,56 @@
 <div x-data="{ 
     activeModal: null, 
     
-    // Data untuk Modal
-    trxId: null,
+    // State Modal
     trxCode: '',
     trxName: '',
-    proofImage: '', // URL gambar bukti transfer
+    actionUrl: '', // URL dinamis dari Blade route()
+    proofImage: '', 
     
-    // Buka Modal Lihat Bukti
+    // 1. Modal Lihat Bukti
     openProofModal(image) {
         this.activeModal = 'proof';
         this.proofImage = image;
     },
 
-    // Buka Modal Terima
-    openApproveModal(id, code) {
+    // 2. Modal Terima (Menerima URL yang sudah digenerate blade)
+    openApproveModal(url, code) {
         this.activeModal = 'approve';
-        this.trxId = id;
+        this.actionUrl = url;
         this.trxCode = code;
     },
 
-    // Buka Modal Tolak
-    openRejectModal(id, code, name) {
+    // 3. Modal Tolak (Menerima URL yang sudah digenerate blade)
+    openRejectModal(url, code, name) {
         this.activeModal = 'reject';
-        this.trxId = id;
+        this.actionUrl = url;
         this.trxCode = code;
         this.trxName = name;
     },
 
     closeModal() {
         this.activeModal = null;
+        // Delay clear data agar transisi mulus
         setTimeout(() => {
             this.proofImage = '';
+            this.actionUrl = '';
+            this.trxCode = '';
+            this.trxName = '';
         }, 300);
     }
 }" class="w-full min-h-screen bg-[#F0F2F5] px-4 pt-6 pb-10 lg:px-8 lg:pt-10 flex flex-col font-sans text-slate-800">
 
     <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col">
 
-        {{-- 1. HEADER --}}
+        {{-- HEADER --}}
         <div class="shrink-0 mb-8">
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">Verifikasi Booking Masuk</h1>
             <p class="text-sm text-slate-500 mt-1 font-medium">
-                Validasi pembayaran Booking Fee dari calon pembeli. 
-                Pastikan uang sudah masuk ke rekening perusahaan.
+                Validasi bukti transfer dari customer. Pastikan dana mutasi sudah masuk.
             </p>
         </div>
 
-        {{-- 2. ALERT --}}
+        {{-- ALERT --}}
         <div class="shrink-0 flex flex-col gap-4 mb-6">
             @if(session('success'))
                 <div x-data="{ show: true }" x-show="show" x-transition.duration.300ms 
@@ -65,14 +68,31 @@
                             <p class="text-xs text-slate-500">{{ session('success') }}</p>
                         </div>
                     </div>
-                    <button @click="show = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <button @click="show = false" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            @endif
+            @if(session('error'))
+                <div x-data="{ show: true }" x-show="show" x-transition.duration.300ms 
+                     class="p-4 rounded-xl bg-white border-l-4 border-red-500 text-slate-700 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-900">Gagal!</h4>
+                            <p class="text-xs text-slate-500">{{ session('error') }}</p>
+                        </div>
+                    </div>
+                    <button @click="show = false" class="text-slate-400 hover:text-slate-600">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
             @endif
         </div>
 
-        {{-- 3. TABLE LIST --}}
+        {{-- TABLE LIST --}}
         <div class="flex-1 flex flex-col">
             {{-- DESKTOP TABLE --}}
             <div class="hidden lg:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
@@ -136,18 +156,18 @@
                                     @endif
                                 </td>
 
-                                {{-- Aksi --}}
+                                {{-- Aksi (UPDATE: Menggunakan route() helper) --}}
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                                        {{-- Reject --}}
-                                        <button @click="openRejectModal({{ $trx->id }}, '{{ $trx->code }}', '{{ $trx->user->name }}')" 
+                                        {{-- Reject Button --}}
+                                        <button @click="openRejectModal('{{ route('admin.transactions.booking.reject', $trx->id) }}', '{{ $trx->code }}', '{{ $trx->user->name }}')" 
                                                 class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 transition-all shadow-sm"
                                                 title="Tolak">
                                             <i class="fa-solid fa-xmark"></i>
                                         </button>
                                         
-                                        {{-- Approve --}}
-                                        <button @click="openApproveModal({{ $trx->id }}, '{{ $trx->code }}')" 
+                                        {{-- Approve Button --}}
+                                        <button @click="openApproveModal('{{ route('admin.transactions.booking.approve', $trx->id) }}', '{{ $trx->code }}')" 
                                                 class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200 transition-all shadow-md"
                                                 title="Terima">
                                             <i class="fa-solid fa-check"></i>
@@ -176,7 +196,6 @@
             <div class="lg:hidden space-y-4">
                 @foreach($transactions as $trx)
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                        {{-- Stripe Kuning --}}
                         <div class="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
 
                         <div class="pl-3">
@@ -216,11 +235,13 @@
                                     Lihat Bukti
                                 </button>
                                 <div class="flex gap-2">
-                                    <button @click="openRejectModal({{ $trx->id }}, '{{ $trx->code }}', '{{ $trx->user->name }}')" 
+                                    {{-- Mobile Reject --}}
+                                    <button @click="openRejectModal('{{ route('admin.transactions.booking.reject', $trx->id) }}', '{{ $trx->code }}', '{{ $trx->user->name }}')" 
                                             class="flex-1 py-2.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold border border-red-100 hover:bg-red-100 transition-colors">
                                         Tolak
                                     </button>
-                                    <button @click="openApproveModal({{ $trx->id }}, '{{ $trx->code }}')" 
+                                    {{-- Mobile Approve --}}
+                                    <button @click="openApproveModal('{{ route('admin.transactions.booking.approve', $trx->id) }}', '{{ $trx->code }}')" 
                                             class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 shadow-md transition-colors">
                                         Terima
                                     </button>
@@ -252,15 +273,20 @@
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100">
             
-            <img :src="proofImage" class="w-full max-h-[80vh] object-contain rounded-lg shadow-2xl border-4 border-white bg-black">
+            <img :src="proofImage" class="w-full max-h-[70vh] object-contain rounded-lg shadow-2xl border-4 border-white bg-black">
             
-            <button @click="closeModal()" class="mt-4 px-4 py-2 bg-white/10 text-white rounded-full hover:bg-white/20 transition-all backdrop-blur-md flex items-center gap-2">
-                <i class="fa-solid fa-xmark"></i> Tutup Preview
-            </button>
+            <div class="flex gap-3 mt-4">
+                <button @click="closeModal()" class="px-4 py-2 bg-white/10 text-white rounded-full hover:bg-white/20 transition-all backdrop-blur-md flex items-center gap-2">
+                    <i class="fa-solid fa-xmark"></i> Tutup
+                </button>
+                <a :href="proofImage" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2">
+                    <i class="fa-solid fa-up-right-from-square"></i> Buka Full Size
+                </a>
+            </div>
         </div>
     </div>
 
-    {{-- ================= MODAL APPROVE ================= --}}
+    {{-- ================= MODAL APPROVE (Menggunakan Action URL Dinamis) ================= --}}
     <div x-show="activeModal === 'approve'" style="display: none;" 
          class="fixed inset-0 z-50 flex items-center justify-center px-4"
          x-transition.opacity.duration.300ms>
@@ -285,7 +311,8 @@
             <div class="mt-6 flex gap-3">
                 <button @click="closeModal()" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Batal</button>
                 
-                <form :action="'{{ url('admin/transactions/booking') }}/' + trxId + '/approve'" method="POST" class="w-full">
+                {{-- Form Action Dinamis --}}
+                <form :action="actionUrl" method="POST" class="w-full">
                     @csrf @method('PATCH')
                     <button type="submit" class="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">
                         Ya, Valid
@@ -295,7 +322,7 @@
         </div>
     </div>
 
-    {{-- ================= MODAL REJECT ================= --}}
+    {{-- ================= MODAL REJECT (Menggunakan Action URL Dinamis) ================= --}}
     <div x-show="activeModal === 'reject'" style="display: none;" 
          class="fixed inset-0 z-50 flex items-center justify-center px-4"
          x-transition.opacity.duration.300ms>
@@ -319,7 +346,8 @@
                 </p>
             </div>
 
-            <form :action="'{{ url('admin/transactions/booking') }}/' + trxId + '/reject'" method="POST">
+            {{-- Form Action Dinamis --}}
+            <form :action="actionUrl" method="POST">
                 @csrf @method('PATCH')
                 
                 <div class="mb-5">

@@ -62,47 +62,39 @@ Route::prefix('admin')
         */
         Route::prefix('transactions')->name('transactions.')->group(function () {
 
-            /*
-            |------------------------- BOOKING VERIFICATION -------------------------
-            */
+            // BOOKING
             Route::get('/booking', [TransactionController::class, 'bookingVerification'])
                 ->name('booking');
-
             Route::patch('/booking/{id}/approve', [TransactionController::class, 'approveBooking'])
                 ->name('booking.approve');
-
             Route::patch('/booking/{id}/reject', [TransactionController::class, 'rejectBooking'])
                 ->name('booking.reject');
 
-            /*
-            |------------------------- DOCUMENT VERIFICATION ------------------------
-            */
+            // VERIFIKASI BERKAS
             Route::get('/documents', [TransactionController::class, 'documentVerification'])
                 ->name('documents');
-
             Route::patch('/documents/{id}/approve', [TransactionController::class, 'approveDocuments'])
                 ->name('documents.approve');
-
             Route::patch('/documents/{id}/revise', [TransactionController::class, 'reviseDocuments'])
                 ->name('documents.revise');
+                Route::patch('/documents/{docId}/validate', [TransactionController::class, 'validateDocumentItem'])
+    ->name('documents.validate_item');
 
-            /*
-            |------------------------- FINAL APPROVAL --------------------------------
-            */
+            // FINAL APPROVAL
             Route::get('/approval', [TransactionController::class, 'approval'])
                 ->name('approval');
-
             Route::patch('/approval/{id}/finalize', [TransactionController::class, 'finalizeTransaction'])
                 ->name('approval.finalize');
-
             Route::patch('/approval/{id}/reject-bank', [TransactionController::class, 'rejectBank'])
                 ->name('approval.reject');
 
-            /*
-            |------------------------- TRANSACTION HISTORY ---------------------------
-            */
+            // INDEX
             Route::get('/', [TransactionController::class, 'index'])
                 ->name('index');
+
+            // DETAIL TRANSAKSI ADMIN
+            Route::get('/{id}', [TransactionController::class, 'show'])
+                ->name('show');
         });
 
         // Customers

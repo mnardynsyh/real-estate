@@ -4,75 +4,54 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Models\TransactionDocument;
 use App\Models\Unit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
-    // riwayat semua transaksi
+    // ... (Index, BookingVerification, ApproveBooking, RejectBooking tetap sama seperti sebelumnya) ...
     public function index(Request $request) 
     {
-
-        $query = Transaction::with(['user', 'unit.location']);
-
-
-        $transactions = $query->latest()->paginate(10);
-
+        $transactions = Transaction::with(['user', 'unit.location'])->latest()->paginate(10);
         return view('admin.transaksi.riwayat', compact('transactions'));
     }
 
-    // verifikasi booking
     public function bookingVerification()
     {
-        $transactions = Transaction::with(['user', 'unit.location'])
-            ->where('status', 'process') 
-            ->latest()
-            ->paginate(10);
-
+        $transactions = Transaction::with(['user', 'unit.location'])->where('status', 'process')->latest()->paginate(10);
         return view('admin.transaksi.booking', compact('transactions'));
     }
 
-    // ACTION: TERIMA BOOKING
     public function approveBooking($id)
     {
-        $trx = Transaction::findOrFail($id);
-        
-        $trx->update([
-            'status' => 'booking_acc', 
-            'booking_verified_at' => now()
-        ]);
-
-        return back()->with('success', 'Booking diterima. User dapat melanjutkan pemberkasan.');
+        return DB::transaction(function() use ($id) {
+            $trx = Transaction::lockForUpdate()->findOrFail($id);
+            if($trx->status !== 'process') return back()->with('error', 'Status tidak valid.');
+            $trx->update(['status' => 'booking_acc', 'booking_verified_at' => now(), 'admin_note' => null]);
+            return back()->with('success', 'Booking diterima.');
+        });
     }
 
-    // ACTION: TOLAK BOOKING
     public function rejectBooking(Request $request, $id)
     {
-        $request->validate([
-            'admin_note' => 'required|string|max:255'
-        ]);
-
-        $trx = Transaction::findOrFail($id);
-        
-        // Ambil unit terkait
-        $unit = Unit::findOrFail($trx->unit_id);
-
-        // Ubah status transaksi jadi 'rejected'
-        $trx->update([
-            'status' => 'rejected',
-            'admin_note' => $request->admin_note
-        ]);
-
-        $unit->update(['status' => 'available']);
-
-        return back()->with('success', 'Booking ditolak. Unit kembali tersedia untuk publik.');
+        $request->validate(['admin_note' => 'required|string']);
+        return DB::transaction(function() use ($request, $id) {
+            $trx = Transaction::lockForUpdate()->findOrFail($id);
+            $unit = Unit::lockForUpdate()->findOrFail($trx->unit_id);
+            $trx->update(['status' => 'rejected', 'admin_note' => $request->admin_note]);
+            $unit->update(['status' => 'available']);
+            return back()->with('success', 'Booking ditolak.');
+        });
     }
 
-    // 5. HALAMAN VERIFIKASI BERKAS (Status 'docs_review')
+    /**
+     * 3. HALAMAN VERIFIKASI BERKAS
+     */
     public function documentVerification()
     {
-        // Ambil transaksi yang statusnya sedang direview admin
-        // Load relasi 'documents' untuk ditampilkan di modal
+        // Ambil transaksi yang sedang direview dokumennya
         $transactions = Transaction::with(['user', 'unit.location', 'documents'])
             ->where('status', 'docs_review')
             ->latest()
@@ -81,86 +60,112 @@ class TransactionController extends Controller
         return view('admin.transaksi.verif-berkas', compact('transactions'));
     }
 
-    // 6. ACTION: VALIDASI BERKAS (Lanjut ke Bank)
-    public function approveDocuments($id)
-    {
-        $trx = Transaction::findOrFail($id);
-        
-        // Ubah status jadi 'bank_process' (Proses Bank)
-        $trx->update([
-            'status' => 'bank_process'
-        ]);
-
-        return back()->with('success', 'Berkas valid. Status diperbarui menjadi Proses Bank.');
-    }
-
-    // 7. ACTION: MINTA REVISI (Kembalikan ke User)
-    public function reviseDocuments(Request $request, $id)
+    /**
+     * [BARU] VALIDASI PER ITEM DOKUMEN (AJAX)
+     */
+    public function validateDocumentItem(Request $request, $docId)
     {
         $request->validate([
-            'admin_note' => 'required|string|max:255'
+            'status' => 'required|in:valid,invalid',
+            'note'   => 'nullable|string|max:255'
         ]);
+
+        $doc = TransactionDocument::findOrFail($docId);
+        
+        // Update status dokumen spesifik
+        $doc->update([
+            'status' => $request->status,
+            'note'   => $request->status === 'invalid' ? $request->note : null
+        ]);
+
+        return response()->json(['message' => 'Status dokumen diperbarui']);
+    }
+
+    /**
+     * ACTION: VALIDASI BERKAS (Lanjut ke Bank)
+     * Hanya bisa jika semua dokumen VALID
+     */
+    public function approveDocuments($id)
+    {
+        return DB::transaction(function() use ($id) {
+            $trx = Transaction::with('documents')->findOrFail($id);
+            
+            // 1. Cek Status Transaksi
+            if($trx->status !== 'docs_review') {
+                return back()->with('error', 'Status transaksi tidak valid.');
+            }
+
+            // 2. Cek Kelengkapan Dokumen (Strict)
+            // Tidak boleh ada dokumen yang statusnya 'pending' atau 'invalid'
+            $incompleteDocs = $trx->documents->whereIn('status', ['pending', 'invalid'])->count();
+
+            if ($incompleteDocs > 0) {
+                return back()->with('error', 'Tidak bisa lanjut. Pastikan semua dokumen sudah diperiksa dan berstatus Valid.');
+            }
+
+            // 3. Update Status ke Bank Process
+            $trx->update([
+                'status' => 'bank_review',
+                'admin_note' => null
+            ]);
+
+            return back()->with('success', 'Semua berkas valid. Status lanjut ke Proses Bank.');
+        });
+    }
+
+    /**
+     * ACTION: MINTA REVISI (Kembalikan ke User)
+     */
+    public function reviseDocuments(Request $request, $id)
+    {
+        $request->validate(['admin_note' => 'required|string|max:255']);
 
         $trx = Transaction::findOrFail($id);
         
-        // Ubah status kembali ke 'booking_acc' agar user bisa upload ulang
+        // Kembalikan status ke 'booking_acc'
+        // Ini akan membuka kembali form upload di sisi Customer
         $trx->update([
-            'status' => 'booking_acc', // Mundur satu langkah
+            'status' => 'booking_acc', 
             'admin_note' => $request->admin_note
         ]);
 
-        return back()->with('success', 'Catatan revisi dikirim ke user.');
+        return back()->with('success', 'Status dikembalikan ke user untuk revisi.');
     }
-    // 8. HALAMAN APPROVAL & DP (Status 'bank_process')
+
+    // ... (Method approval, finalizeTransaction, rejectBank, show tetap sama) ...
     public function approval()
     {
-        // Menampilkan transaksi yang sedang proses bank atau menunggu DP
         $transactions = Transaction::with(['user', 'unit.location'])
-            ->whereIn('status', ['bank_process', 'approved'])
-            ->latest()
-            ->paginate(10);
-
+            ->whereIn('status', ['bank_review', 'approved'])->latest()->paginate(10);
         return view('admin.transaksi.approval', compact('transactions'));
     }
 
-    // 9. ACTION: FINALISASI (Unit Terjual / Sold)
     public function finalizeTransaction(Request $request, $id)
     {
-        $request->validate([
-            'down_payment' => 'required|numeric|min:0',
-        ]);
-
-        $trx = Transaction::findOrFail($id);
-        $unit = Unit::findOrFail($trx->unit_id);
-
-        // Update Transaksi -> Sold (Selesai)
-        $trx->update([
-            'status' => 'sold',
-            'down_payment' => $request->down_payment,
-            'dp_verified_at' => now(),
-        ]);
-
-        // PENTING: Update Unit -> Sold (Permanen)
-        $unit->update(['status' => 'sold']);
-
-        return back()->with('success', 'Selamat! Transaksi selesai & Unit resmi terjual.');
+        $request->validate(['down_payment' => 'required|numeric|min:0']);
+        return DB::transaction(function() use ($request, $id) {
+            $trx = Transaction::lockForUpdate()->findOrFail($id);
+            $unit = Unit::lockForUpdate()->findOrFail($trx->unit_id);
+            $trx->update(['status' => 'sold', 'down_payment' => $request->down_payment, 'dp_verified_at' => now()]);
+            $unit->update(['status' => 'sold']);
+            return back()->with('success', 'Transaksi Selesai.');
+        });
     }
 
-    // 10. ACTION: GAGAL BANK (Batalkan)
     public function rejectBank($id)
     {
-        $trx = Transaction::findOrFail($id);
-        $unit = Unit::findOrFail($trx->unit_id);
+        return DB::transaction(function() use ($id) {
+            $trx = Transaction::lockForUpdate()->findOrFail($id);
+            $unit = Unit::lockForUpdate()->findOrFail($trx->unit_id);
+            $trx->update(['status' => 'rejected', 'admin_note' => 'Gagal Bank/Akad']);
+            $unit->update(['status' => 'available']);
+            return back()->with('success', 'Transaksi dibatalkan.');
+        });
+    }
 
-        // Update Transaksi -> Rejected
-        $trx->update([
-            'status' => 'rejected',
-            'admin_note' => 'Pengajuan KPR ditolak oleh Bank/Developer, atau user membatalkan saat proses akad.'
-        ]);
-
-        // PENTING: Update Unit -> Available (Bisa dijual lagi)
-        $unit->update(['status' => 'available']);
-
-        return back()->with('success', 'Transaksi dibatalkan. Unit kembali tersedia untuk publik.');
+    public function show($id)
+    {
+        $trx = Transaction::with(['user', 'unit.location', 'documents'])->findOrFail($id);
+        return view('admin.transaksi.detail', compact('trx'));
     }
 }
