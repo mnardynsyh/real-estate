@@ -62,6 +62,10 @@ Route::prefix('admin')
         */
         Route::prefix('transactions')->name('transactions.')->group(function () {
 
+            // EXPORT EXCEL (Letakkan di atas routes dinamis {id})
+            Route::get('/export', [TransactionController::class, 'export'])
+                ->name('export');
+
             // BOOKING
             Route::get('/booking', [TransactionController::class, 'bookingVerification'])
                 ->name('booking');
@@ -77,8 +81,10 @@ Route::prefix('admin')
                 ->name('documents.approve');
             Route::patch('/documents/{id}/revise', [TransactionController::class, 'reviseDocuments'])
                 ->name('documents.revise');
-                Route::patch('/documents/{docId}/validate', [TransactionController::class, 'validateDocumentItem'])
-    ->name('documents.validate_item');
+            
+            // Validasi Per Item (AJAX)
+            Route::patch('/documents/{docId}/validate', [TransactionController::class, 'validateDocumentItem'])
+                ->name('documents.validate_item');
 
             // FINAL APPROVAL
             Route::get('/approval', [TransactionController::class, 'approval'])
@@ -88,11 +94,9 @@ Route::prefix('admin')
             Route::patch('/approval/{id}/reject-bank', [TransactionController::class, 'rejectBank'])
                 ->name('approval.reject');
 
-            // INDEX
+            // INDEX & DETAIL (Letakkan paling bawah agar tidak konflik dengan /booking atau /approval)
             Route::get('/', [TransactionController::class, 'index'])
                 ->name('index');
-
-            // DETAIL TRANSAKSI ADMIN
             Route::get('/{id}', [TransactionController::class, 'show'])
                 ->name('show');
         });
@@ -122,7 +126,7 @@ Route::prefix('customer')
             [CustomerTransaction::class, 'index']
         )->name('transactions.index');
 
-        // DETAIL TRANSAKSI (PAGE BARU)
+        // DETAIL TRANSAKSI
         Route::get('/transactions/{id}', 
             [CustomerTransaction::class, 'show']
         )->name('transactions.show');
@@ -148,4 +152,3 @@ Route::prefix('customer')
         Route::patch('/profile', [CustomerProfile::class, 'update'])
             ->name('profile.update');
     });
-

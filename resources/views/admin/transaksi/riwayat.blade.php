@@ -6,10 +6,8 @@
 
     <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col">
 
-
-
         {{-- ===================================================== --}}
-        {{-- HEADER --}}
+        {{-- HEADER & ACTION --}}
         {{-- ===================================================== --}}
         <div class="shrink-0 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -18,10 +16,16 @@
                     Arsip lengkap seluruh transaksi dan progress proses KPR.
                 </p>
             </div>
+
+            {{-- Tombol Export Excel --}}
+            <div class="flex-shrink-0">
+                <a href="{{ route('admin.transactions.export') }}" target="_blank" 
+                   class="inline-flex items-center justify-center px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 gap-2 hover:-translate-y-0.5">
+                    <i class="fa-solid fa-file-excel text-lg"></i>
+                    <span>Export Excel</span>
+                </a>
+            </div>
         </div>
-
-
-
 
         {{-- ===================================================== --}}
         {{-- FILTER & SEARCH --}}
@@ -67,9 +71,6 @@
                 </button>
             </form>
         </div>
-
-
-
 
         {{-- ===================================================== --}}
         {{-- TABLE VIEW (DESKTOP) --}}
@@ -137,6 +138,7 @@
                                     'booking_acc'  => ['bg'=>'bg-blue-100',   'text'=>'text-blue-700','label'=>'Pemberkasan'],
                                     'docs_review'  => ['bg'=>'bg-purple-100', 'text'=>'text-purple-700','label'=>'Review Berkas'],
                                     'bank_process' => ['bg'=>'bg-orange-100', 'text'=>'text-orange-700','label'=>'Proses Bank'],
+                                    'bank_review'  => ['bg'=>'bg-purple-100', 'text'=>'text-purple-700','label'=>'Proses Bank'],
                                     'sold'         => ['bg'=>'bg-emerald-100','text'=>'text-emerald-700','label'=>'Terjual / Lunas'],
                                     'rejected'     => ['bg'=>'bg-red-100',    'text'=>'text-red-700','label'=>'Ditolak'],
                                     'canceled'     => ['bg'=>'bg-slate-200',  'text'=>'text-slate-700','label'=>'Dibatalkan']
@@ -155,7 +157,6 @@
                             title="Lihat Detail">
                                 <i class="fa-solid fa-eye text-xs"></i>
                             </a>
-
                         </td>
 
                     </tr>
@@ -171,9 +172,6 @@
                 </tbody>
             </table>
         </div>
-
-
-
 
         {{-- ===================================================== --}}
         {{-- MOBILE VERSION --}}
@@ -195,7 +193,18 @@
                     </div>
 
                     @php
-                        $mobileBadge = $badge ?? ['bg'=>'bg-slate-100','text'=>'text-slate-600'];
+                        // Logic badge mobile copy dari desktop agar konsisten
+                        $mobileBadge = [
+                            'pending'      => ['bg'=>'bg-slate-100',  'text'=>'text-slate-600'],
+                            'process'      => ['bg'=>'bg-yellow-100', 'text'=>'text-yellow-800'],
+                            'booking_acc'  => ['bg'=>'bg-blue-100',   'text'=>'text-blue-700'],
+                            'docs_review'  => ['bg'=>'bg-purple-100', 'text'=>'text-purple-700'],
+                            'bank_process' => ['bg'=>'bg-orange-100', 'text'=>'text-orange-700'],
+                            'bank_review'  => ['bg'=>'bg-purple-100', 'text'=>'text-purple-700'],
+                            'sold'         => ['bg'=>'bg-emerald-100','text'=>'text-emerald-700'],
+                            'rejected'     => ['bg'=>'bg-red-100',    'text'=>'text-red-700'],
+                            'canceled'     => ['bg'=>'bg-slate-200',  'text'=>'text-slate-700']
+                        ][$trx->status] ?? ['bg'=>'bg-slate-100','text'=>'text-slate-600'];
                     @endphp
                     <span class="px-2 py-1 rounded text-[10px] font-bold {{ $mobileBadge['bg'] }} {{ $mobileBadge['text'] }}">
                         {{ ucfirst($trx->status) }}
@@ -222,9 +231,6 @@
             @endforeach
 
         </div>
-
-
-
 
         {{-- ===================================================== --}}
         {{-- PAGINATION --}}
