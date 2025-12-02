@@ -14,7 +14,7 @@
     formPrice: '',
     formLand: '',
     formBuilding: '',
-    formDesc: '',
+    formDesc: '', // Field Deskripsi
     formStatus: 'available',
     formImageOld: null,
     
@@ -31,7 +31,9 @@
         this.formDesc = '';
         this.formStatus = 'available';
         this.formImageOld = null;
-        document.getElementById('fileInput').value = ''; 
+        if(document.getElementById('fileInput')) {
+            document.getElementById('fileInput').value = ''; 
+        }
     },
 
     // Buka Modal Tambah/Edit
@@ -48,7 +50,7 @@
             this.formPrice = data.price;
             this.formLand = data.land_area;
             this.formBuilding = data.building_area;
-            this.formDesc = data.description;
+            this.formDesc = data.description; // Load deskripsi
             this.formStatus = data.status;
             this.formImageOld = data.image;
         }
@@ -67,40 +69,43 @@
             this.resetForm();
         }, 300);
     }
-}" class="w-full min-h-screen bg-[#F0F2F5] px-4 pt-16 pb-10 lg:px-8 lg:pt-16 flex flex-col font-sans text-slate-800">
+}" class="w-full min-h-screen bg-slate-100 px-2 pt-16 lg:px-4 lg:pt-16 flex flex-col font-sans text-slate-800">
 
     <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col">
 
-        {{-- 1. HEADER SECTION --}}
-        <div class="shrink-0 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4 border-b border-slate-400 pb-4">
             <div>
-                <h1 class="text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">Data Unit Rumah</h1>
-                <p class="text-sm text-slate-500 mt-1 font-medium">Kelola stok unit, harga, dan spesifikasi.</p>
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900">
+                    Data Unit Rumah
+                </h1>
+                <p class="text-slate-600 mt-1 text-sm font-medium">
+                    Kelola stok unit, harga, dan spesifikasi properti.
+                </p>
             </div>
             
             {{-- Tombol Tambah --}}
             <button @click="openFormModal(false)" 
-                    class="group inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-blue-200 transition-all duration-200 active:scale-95">
-                <i class="fa-solid fa-plus transition-transform group-hover:rotate-90"></i>
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 active:scale-95">
+                <i class="fa-solid fa-plus"></i>
                 <span>Tambah Unit</span>
             </button>
         </div>
 
-        {{-- 2. ALERT NOTIFICATION --}}
-        <div class="shrink-0 flex flex-col gap-4 mb-6">
+        {{-- alert--}}
+        <div class="flex flex-col gap-4 mb-8">
             @if(session('success'))
-                <div x-data="{ show: true }" x-show="show" x-transition.duration.300ms 
-                     class="p-4 rounded-xl bg-white border-l-4 border-emerald-500 text-slate-700 flex items-center justify-between shadow-sm">
+                <div x-data="{ show: true }" x-show="show" x-transition.opacity.duration.500ms 
+                     class="p-4 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800 flex items-center justify-between shadow-sm">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-check"></i>
                         </div>
                         <div>
-                            <h4 class="font-bold text-sm text-slate-900">Berhasil!</h4>
-                            <p class="text-xs text-slate-500">{{ session('success') }}</p>
+                            <h4 class="font-bold text-sm">Berhasil!</h4>
+                            <p class="text-xs opacity-90">{{ session('success') }}</p>
                         </div>
                     </div>
-                    <button @click="show = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <button @click="show = false" class="text-emerald-400 hover:text-emerald-600 transition-colors">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
@@ -108,49 +113,46 @@
             
             @if($errors->any())
                 <div x-data="{ show: true }" x-show="show" 
-                     class="p-4 rounded-xl bg-white border-l-4 border-red-500 text-slate-700 flex items-center justify-between shadow-sm">
+                     class="p-4 rounded-xl bg-red-50 border border-red-100 text-red-800 flex items-center justify-between shadow-sm">
                     <div class="flex items-start gap-3">
                         <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0 mt-0.5">
                             <i class="fa-solid fa-triangle-exclamation"></i>
                         </div>
                         <div>
-                            <h4 class="font-bold text-sm text-slate-900">Terdapat Kesalahan Input</h4>
-                            <ul class="list-disc pl-4 text-xs text-slate-500 mt-1 space-y-1">
+                            <h4 class="font-bold text-sm">Terdapat Kesalahan Input</h4>
+                            <ul class="list-disc pl-4 text-xs opacity-90 mt-1 space-y-1">
                                 @foreach ($errors->all() as $error)
                                     <li>{{ $error }}</li>
                                 @endforeach
                             </ul>
                         </div>
                     </div>
-                    <button @click="show = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <button @click="show = false" class="text-red-400 hover:text-red-600 transition-colors">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
             @endif
         </div>
 
-        {{-- 3. CONTENT TABLE --}}
         <div class="flex-1 flex flex-col">
             
             {{-- DESKTOP TABLE VIEW --}}
-            <div class="hidden lg:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50/50 border-b border-slate-200">
+            <div class="hidden lg:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider">
                         <tr>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unit & Lokasi</th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Spesifikasi</th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Harga</th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center w-32">Aksi</th>
+                            <th class="px-6 py-4 font-bold tracking-wide">Unit & Lokasi</th>
+                            <th class="px-6 py-4 font-bold tracking-wide">Spesifikasi</th>
+                            <th class="px-6 py-4 font-bold tracking-wide">Harga</th>
+                            <th class="px-6 py-4 font-bold tracking-wide text-center">Status</th>
+                            <th class="px-6 py-4 font-bold tracking-wide text-center w-32">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-slate-100 text-slate-600">
                         @forelse($units as $unit)
-                            <tr class="hover:bg-slate-50 transition-colors group">
-                                {{-- Unit Info --}}
+                            <tr class="hover:bg-slate-50/80 transition-colors group">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-4">
-                                        {{-- Image Thumbnail --}}
                                         <div class="w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 relative">
                                             @if($unit->image)
                                                 <img src="{{ Storage::url($unit->image) }}" class="w-full h-full object-cover">
@@ -170,7 +172,6 @@
                                     </div>
                                 </td>
 
-                                {{-- Spesifikasi --}}
                                 <td class="px-6 py-4">
                                     <div class="space-y-1">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
@@ -182,12 +183,10 @@
                                     </div>
                                 </td>
 
-                                {{-- Harga --}}
                                 <td class="px-6 py-4">
                                     <p class="text-sm font-bold text-slate-800">Rp {{ number_format($unit->price, 0, ',', '.') }}</p>
                                 </td>
 
-                                {{-- Status Badge --}}
                                 <td class="px-6 py-4 text-center">
                                     @php
                                         $statusClass = match($unit->status) {
@@ -203,20 +202,22 @@
                                             default => $unit->status
                                         };
                                     @endphp
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border {{ $statusClass }}">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border {{ $statusClass }}">
                                         {{ $statusLabel }}
                                     </span>
                                 </td>
 
                                 {{-- Aksi --}}
                                 <td class="px-6 py-4 text-center">
-                                    <div class="flex items-center justify-center gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                    <div class="flex items-center justify-center gap-2">
                                         <button @click="openFormModal(true, {{ $unit }})" 
-                                           class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-all">
+                                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-sm"
+                                           title="Edit">
                                             <i class="fa-solid fa-pen text-xs"></i>
                                         </button>
                                         <button @click="openDeleteModal({{ $unit->id }}, '{{ $unit->block_number }}')"
-                                                class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition-all">
+                                                class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all shadow-sm"
+                                                title="Hapus">
                                             <i class="fa-solid fa-trash text-xs"></i>
                                         </button>
                                     </div>
@@ -226,12 +227,12 @@
                             <tr>
                                 <td colspan="5" class="px-6 py-20 text-center">
                                     <div class="flex flex-col items-center justify-center">
-                                        <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
                                             <i class="fa-solid fa-house-chimney text-3xl text-slate-300"></i>
                                         </div>
                                         <h3 class="text-slate-800 font-bold text-base">Belum ada data unit</h3>
-                                        <p class="text-slate-500 text-sm mt-1 max-w-xs">Unit yang Anda tambahkan akan muncul di sini.</p>
-                                        <button @click="openFormModal(false)" class="mt-4 text-blue-600 hover:underline text-sm font-semibold">
+                                        <p class="text-slate-500 text-xs mt-1 max-w-xs">Unit yang Anda tambahkan akan muncul di sini.</p>
+                                        <button @click="openFormModal(false)" class="mt-4 text-blue-600 hover:text-blue-700 text-sm font-bold hover:underline">
                                             Tambah Unit Baru
                                         </button>
                                     </div>
@@ -245,7 +246,7 @@
             {{-- MOBILE CARD VIEW --}}
             <div class="lg:hidden space-y-4 mb-6">
                 @forelse($units as $unit)
-                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-slate-300 transition-all">
                         {{-- Stripe Status --}}
                         @php
                             $stripeColor = match($unit->status) {
@@ -308,11 +309,11 @@
                             </div>
 
                             <div class="grid grid-cols-2 gap-3">
-                                <button @click="openFormModal(true, {{ $unit }})" class="flex items-center justify-center py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors">
-                                    Edit
+                                <button @click="openFormModal(true, {{ $unit }})" class="flex items-center justify-center py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
+                                    <i class="fa-solid fa-pen mr-2"></i> Edit
                                 </button>
-                                <button @click="openDeleteModal({{ $unit->id }}, '{{ $unit->block_number }}')" class="flex items-center justify-center py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors">
-                                    Hapus
+                                <button @click="openDeleteModal({{ $unit->id }}, '{{ $unit->block_number }}')" class="flex items-center justify-center py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm">
+                                    <i class="fa-solid fa-trash mr-2"></i> Hapus
                                 </button>
                             </div>
                         </div>
@@ -326,14 +327,14 @@
 
             {{-- PAGINATION --}}
             @if($units->hasPages())
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3 flex items-center justify-between sm:px-6 mt-auto">
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3 flex items-center justify-between sm:px-6 mt-auto">
                     {{ $units->links() }}
                 </div>
             @endif
         </div>
     </div>
 
-    {{-- ================= MODAL FORM (TAMBAH / EDIT) ================= --}}
+    {{-- modal form --}}
     <div x-show="activeModal === 'form'" style="display: none;" 
          class="fixed inset-0 z-50 flex items-center justify-center px-4"
          x-transition.opacity.duration.300ms>
@@ -347,7 +348,6 @@
              x-transition:enter-start="opacity-0 scale-95 translate-y-4"
              x-transition:enter-end="opacity-100 scale-100 translate-y-0">
 
-            {{-- Header --}}
             <div class="px-8 pt-8 pb-6 flex justify-between items-start shrink-0 bg-white z-10">
                 <div>
                     <h3 class="text-2xl font-bold text-slate-900" x-text="isEdit ? 'Edit Unit Rumah' : 'Tambah Unit Baru'"></h3>
@@ -358,7 +358,7 @@
                 </button>
             </div>
 
-            {{-- Scrollable Form Body --}}
+            {{-- form edit --}}
             <div class="px-8 py-2 overflow-y-auto custom-scrollbar">
                 <form method="POST" enctype="multipart/form-data" 
                       :action="isEdit ? '{{ url('admin/units') }}/' + formId : '{{ route('admin.units.store') }}'">
@@ -370,13 +370,13 @@
                         {{-- 1. Lokasi & Blok --}}
                         <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="group">
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Perumahan</label>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Lokasi Perumahan</label>
                                 <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                                        <i class="fa-solid fa-map-location-dot text-slate-400 group-focus-within:text-blue-500"></i>
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <i class="fa-solid fa-map-location-dot text-slate-400"></i>
                                     </div>
                                     <select name="housing_location_id" x-model="formLocationId" required
-                                            class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium cursor-pointer">
+                                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium cursor-pointer">
                                         <option value="" disabled>Pilih Lokasi</option>
                                         @foreach($housings as $h)
                                             <option value="{{ $h->id }}">{{ $h->name }}</option>
@@ -386,63 +386,70 @@
                             </div>
                             
                             <div class="group">
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Nomor Blok/Kavling</label>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nomor Blok/Kavling</label>
                                 <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                                        <i class="fa-solid fa-tag text-slate-400 group-focus-within:text-blue-500"></i>
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <i class="fa-solid fa-tag text-slate-400"></i>
                                     </div>
                                     <input type="text" name="block_number" x-model="formBlock" required placeholder="Contoh: A-12"
-                                           class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium">
+                                           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium">
                                 </div>
                             </div>
                         </div>
 
                         {{-- 2. Harga & Tipe --}}
                         <div class="group">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Harga Jual (Rp)</label>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Harga Jual (Rp)</label>
                             <div class="relative">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                                    <span class="text-slate-400 font-bold text-xs group-focus-within:text-blue-500">Rp</span>
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <span class="text-slate-400 font-bold text-xs">Rp</span>
                                 </div>
                                 <input type="number" name="price" x-model="formPrice" required placeholder="0"
-                                       class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold">
+                                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold">
                             </div>
                         </div>
 
                         <div class="group">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Tipe Rumah</label>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tipe Rumah</label>
                             <div class="relative">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                                    <i class="fa-solid fa-ruler-combined text-slate-400 group-focus-within:text-blue-500"></i>
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <i class="fa-solid fa-ruler-combined text-slate-400"></i>
                                 </div>
                                 <input type="text" name="type" x-model="formType" required placeholder="36/72"
-                                       class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium">
+                                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium">
                             </div>
                         </div>
 
                         {{-- 3. Luas Tanah & Bangunan --}}
                         <div class="group">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Luas Tanah (m²)</label>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Luas Tanah (m²)</label>
                             <input type="number" name="land_area" x-model="formLand" required placeholder="60"
-                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium">
+                                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium">
                         </div>
 
                         <div class="group">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Luas Bangunan (m²)</label>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Luas Bangunan (m²)</label>
                             <input type="number" name="building_area" x-model="formBuilding" required placeholder="36"
-                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium">
+                                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium">
                         </div>
 
-                        {{-- 4. Status (Hanya muncul saat edit) --}}
+                        {{-- 4. Deskripsi --}}
+                        <div class="md:col-span-2 group">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Deskripsi Unit</label>
+                            <textarea name="description" x-model="formDesc" rows="3" placeholder="Fasilitas, keunggulan, atau catatan tambahan..."
+                                      class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium leading-relaxed"></textarea>
+                        </div>
+
+                        {{-- 5. Status --}}
                         <template x-if="isEdit">
                             <div class="md:col-span-2 group">
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Status Unit</label>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Status Unit</label>
                                 <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                                        <i class="fa-solid fa-rotate text-slate-400 group-focus-within:text-blue-500"></i>
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <i class="fa-solid fa-rotate text-slate-400"></i>
                                     </div>
                                     <select name="status" x-model="formStatus" required
-                                            class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold cursor-pointer">
+                                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold cursor-pointer">
                                         <option value="available">Available (Tersedia)</option>
                                         <option value="booked">Booked (Dipesan)</option>
                                         <option value="sold">Sold (Terjual)</option>
@@ -451,11 +458,11 @@
                             </div>
                         </template>
 
-                        {{-- 5. Upload Foto --}}
+                        {{-- 6. Upload Foto --}}
                         <div class="md:col-span-2 group">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Foto Unit (Opsional)</label>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Foto Unit (Opsional)</label>
                             <input type="file" name="image" id="fileInput" accept="image/*"
-                                   class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer">
+                                   class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer border border-slate-200 rounded-lg">
                             <p class="text-xs text-slate-400 mt-2 ml-1">*Maksimal ukuran file 10MB.</p>
                             
                             {{-- Preview Link jika ada --}}
@@ -471,11 +478,11 @@
                     {{-- Footer --}}
                     <div class="mt-2 grid grid-cols-2 gap-4 pt-6 border-t border-slate-100 bg-white">
                         <button type="button" @click="closeModal()" 
-                            class="w-full py-3 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 hover:text-slate-800 transition-all focus:ring-4 focus:ring-slate-100">
+                            class="w-full py-2.5 rounded-lg border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 hover:text-slate-800 transition-all">
                             Batal
                         </button>
                         <button type="submit" 
-                            class="w-full py-3 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 focus:ring-4 focus:ring-blue-500/30">
+                            class="w-full py-2.5 rounded-lg bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5">
                             Simpan Data
                         </button>
                     </div>
@@ -484,7 +491,7 @@
         </div>
     </div>
 
-    {{-- ================= MODAL HAPUS ================= --}}
+    {{-- modal hapus --}}
     <div x-show="activeModal === 'delete'" style="display: none;" 
          class="fixed inset-0 z-50 flex items-center justify-center px-4"
          x-transition.opacity.duration.300ms>
@@ -497,8 +504,8 @@
              x-transition:enter-end="opacity-100 scale-100 translate-y-0">
             
             <div class="text-center">
-                <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500 border border-red-100">
-                    <i class="fa-solid fa-trash-can text-3xl"></i>
+                <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-500 border border-red-100">
+                    <i class="fa-solid fa-trash-can text-2xl"></i>
                 </div>
                 <h3 class="text-lg font-bold text-slate-900">Hapus Unit?</h3>
                 <p class="mt-2 text-sm text-slate-500 leading-relaxed px-4">
@@ -507,10 +514,10 @@
             </div>
 
             <div class="mt-6 flex gap-3">
-                <button @click="closeModal()" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Batal</button>
+                <button @click="closeModal()" class="w-full rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
                 <form :action="'{{ url('admin/units') }}/' + formId" method="POST" class="w-full">
                     @csrf @method('DELETE')
-                    <button type="submit" class="w-full rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white hover:bg-red-700 shadow-lg shadow-red-200 transition-all">Ya, Hapus</button>
+                    <button type="submit" class="w-full rounded-lg bg-red-600 py-2.5 text-sm font-bold text-white hover:bg-red-700 shadow-lg shadow-red-200 transition-all">Ya, Hapus</button>
                 </form>
             </div>
         </div>
