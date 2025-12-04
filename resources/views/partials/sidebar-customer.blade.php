@@ -1,7 +1,4 @@
-{{-- 
-    WRAPPER UTAMA (x-data) 
-    Mengontrol state sidebar (mobile) dan dropdown profil
---}}
+
 <div x-data="{ sidebarOpen: false, profileOpen: false }">
 
     {{-- NAVBAR ATAS --}}
@@ -19,14 +16,11 @@
 
                 {{-- Logo Brand --}}
                 <a href="{{ route('home') }}" class="flex ms-2 md:me-24 items-center gap-2">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
-                        <i class="fa-solid fa-house"></i>
-                    </div>
-                    <span class="self-center text-xl font-bold sm:text-2xl whitespace-nowrap text-gray-800 tracking-tight">RealEstate<span class="text-blue-600">Ku</span></span>
+                    <span class="self-center text-md font-bold sm:text-2xl whitespace-nowrap text-gray-800 tracking-tight">Terra<span class="text-blue-600">Home</span></span>
                 </a>
             </div>
 
-            {{-- User Profile Dropdown (Updated with Alpine) --}}
+            {{-- User Profile Dropdown --}}
             <div class="flex items-center relative">
                 <div class="flex items-center ms-3">
                     <div>
@@ -70,7 +64,6 @@
     </nav>
 
     {{-- SIDEBAR CUSTOMER --}}
-    {{-- Tambahkan logic class binding untuk responsive mobile --}}
     <aside id="customer-sidebar" 
            class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 sm:translate-x-0"
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
@@ -84,7 +77,6 @@
                     Menu Pelanggan
                 </div>
 
-                {{-- 1. Dashboard (Visualisasi Status - PDF Poin 3) --}}
                 <li>
                     <a href="{{ route('customer.dashboard') }}"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 
@@ -98,7 +90,6 @@
                     </a>
                 </li>
 
-                {{-- 2. Riwayat Booking & Pemberkasan (PDF Poin 3) --}}
                 <li>
                     <a href="{{ route('customer.transactions.index') }}"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 
@@ -112,9 +103,7 @@
                     </a>
                 </li>
 
-                {{-- 3. Profil Saya (Update Biodata & NIK - PDF Poin 1) --}}
                 <li>
-                    {{-- Nanti arahkan ke route('customer.profile.edit') --}}
                     <a href="{{route('customer.profile.edit')}}" 
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 
                        {{ request()->routeIs('customer.profile.*') 
@@ -127,7 +116,6 @@
                     </a>
                 </li>
 
-                {{-- 4. Cari Rumah (Shortcut ke Katalog) --}}
                 <li>
                     <a href="{{ route('catalog') }}"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900">
@@ -153,7 +141,7 @@
         </div>
     </aside>
 
-    {{-- OVERLAY MOBILE (Klik di luar sidebar untuk menutup) --}}
+    {{-- OVERLAY MOBILE --}}
     <div x-show="sidebarOpen" 
          @click="sidebarOpen = false"
          x-transition.opacity

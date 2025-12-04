@@ -33,7 +33,7 @@
                 <div class="w-8 h-8 border border-white/30 rounded flex items-center justify-center backdrop-blur-sm">
                      <i class="fa-solid fa-city text-xs"></i>
                 </div>
-                <span class="font-medium tracking-widest text-xs uppercase">RealEstateKu</span>
+                <span class="font-medium tracking-widest text-xs uppercase">TerraHome</span>
             </div>
             
             <div>
@@ -46,7 +46,7 @@
             </div>
 
             <div class="flex gap-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                <span>&copy; {{ date('Y') }} RealEstateKu Corp.</span>
+                <span>&copy; {{ date('Y') }} <a href="https://github.com/mnardynsyh">mnardynsyh</a></span>
             </div>
         </div>
     </div>

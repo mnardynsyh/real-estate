@@ -1,10 +1,6 @@
-{{-- 
-    WRAPPER UTAMA (x-data) 
-    Mengontrol state sidebar (mobile) dan dropdown profil
---}}
+
 <div x-data="{ sidebarOpen: false, profileOpen: false }">
 
-    {{-- ================= NAVBAR ATAS ================= --}}
     <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="px-3 py-3 lg:px-5 lg:pl-3 h-16 flex items-center justify-between">
             <div class="flex items-center justify-start rtl:justify-end">
@@ -17,16 +13,13 @@
                     </svg>
                 </button>
 
-                {{-- Logo Brand --}}
+                {{-- Brand --}}
                 <a href="{{ route('admin.dashboard') }}" class="flex ms-2 md:me-24 items-center gap-2">
-                    <div class="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-white">
-                        <i class="fa-solid fa-user-shield"></i>
-                    </div>
-                    <span class="self-center text-xl font-bold sm:text-2xl whitespace-nowrap text-gray-800 tracking-tight">RealEstate<span class="text-blue-600">Admin</span></span>
+                    <span class="self-center text-md font-bold sm:text-2xl whitespace-nowrap text-gray-800 tracking-tight">Terra<span class="text-blue-600">Home</span></span>
                 </a>
             </div>
 
-            {{-- User Profile Dropdown --}}
+            {{-- User Profile --}}
             <div class="flex items-center relative">
                 <div class="flex items-center ms-3">
                     <div>
@@ -69,7 +62,6 @@
         </div>
     </nav>
 
-    {{-- ================= SIDEBAR ADMIN ================= --}}
     <aside id="admin-sidebar" 
            class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 sm:translate-x-0"
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
@@ -83,7 +75,6 @@
                     Menu Utama
                 </div>
 
-                {{-- 1. DASHBOARD --}}
                 <li>
                     <a href="{{ route('admin.dashboard') }}"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 
@@ -97,7 +88,7 @@
                     </a>
                 </li>
 
-                {{-- 2. MASTER DATA (Dropdown) --}}
+
                 <li x-data="{ open: {{ request()->routeIs(['admin.housing.*', 'admin.units.*']) ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="flex items-center w-full px-3 py-2.5 rounded-lg transition-all duration-200 group
@@ -133,7 +124,7 @@
                     </ul>
                 </li>
 
-                {{-- 3. TRANSAKSI (Dropdown) --}}
+
                 <li x-data="{ open: {{ request()->routeIs('admin.transactions.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="flex items-center w-full px-3 py-2.5 rounded-lg transition-all duration-200 group
@@ -182,7 +173,6 @@
                     </ul>
                 </li>
 
-                {{-- 4. CUSTOMERS --}}
                 <li>
                     <a href="{{ route('admin.customers.index') }}"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 
