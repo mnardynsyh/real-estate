@@ -119,10 +119,8 @@ class TransactionController extends Controller
     {
         $request->validate([
             'status' => 'required|in:valid,invalid',
-            'note'   => 'required_if:status,invalid|nullable|string|max:255'
-            ], [
-                'note.required_if' => 'Alasan penolakan wajib diisi jika status Invalid.'
-            ]);
+            'note'   => 'nullable|string|max:255'
+        ]);
 
         $doc = TransactionDocument::findOrFail($docId);
         
@@ -138,36 +136,28 @@ class TransactionController extends Controller
      * ACTION: VALIDASI SEMUA BERKAS (Lanjut ke Bank)
      */
     public function approveDocuments($id)
-{
-    return DB::transaction(function() use ($id) {
-        $trx = Transaction::with('documents')->findOrFail($id);
-        
-        if($trx->status !== 'docs_review') {
-            return back()->with('error', 'Status transaksi tidak valid.');
-        }
+    {
+        return DB::transaction(function() use ($id) {
+            $trx = Transaction::with('documents')->findOrFail($id);
+            
+            if($trx->status !== 'docs_review') {
+                return back()->with('error', 'Status transaksi tidak valid.');
+            }
 
-        // Cek dokumen yang belum valid/pending
-        $incompleteDocs = $trx->documents->whereIn('status', ['pending', 'invalid'])->count();
-        
-        // Cek apakah dokumen sudah diupload (minimal 1 atau sesuaikan jumlah wajib)
-        $totalDocs = $trx->documents->count();
+            $incompleteDocs = $trx->documents->whereIn('status', ['pending', 'invalid'])->count();
 
-        if ($totalDocs == 0) {
-             return back()->with('error', 'Dokumen belum diunggah oleh user.');
-        }
+            if ($incompleteDocs > 0) {
+                return back()->with('error', 'Tidak bisa lanjut. Pastikan semua dokumen sudah diperiksa dan berstatus Valid.');
+            }
 
-        if ($incompleteDocs > 0) {
-            return back()->with('error', 'Pastikan semua dokumen berstatus Valid.');
-        }
+            $trx->update([
+                'status' => 'bank_review',
+                'admin_note' => null
+            ]);
 
-        $trx->update([
-            'status' => 'bank_review',
-            'admin_note' => null
-        ]);
-
-        return back()->with('success', 'Semua berkas valid. Status lanjut ke Proses Bank.');
-    });
-}
+            return back()->with('success', 'Semua berkas valid. Status lanjut ke Proses Bank.');
+        });
+    }
 
     /**
      * ACTION: MINTA REVISI (Kembalikan ke User)
